@@ -88,22 +88,48 @@ def unwrap_scn(data_blob, outputs, data_dim, avoid_keys):
             print('key:',key)
             print('data:',data)
             raise TypeError
+
+#    print("target array keys:", target_array_keys)
+#    print("target list keys:", target_list_keys)
     # a-1) Handle the list of ndarrays
+    batch_indices = []  # [{target0: [batch 0 evt idxs], target1: [batch 1 evt idxs], ... }, {target0: ...}, ...]
     for target in target_array_keys:
         data = data_blob[target]
-        for d in data:
+        for big_batch_idx, d in enumerate(data):
+#            print(target,"d:",d)
+            if big_batch_idx >= len(batch_indices):
+                batch_indices.append({})
+            this_batch_indices = batch_indices[big_batch_idx]
             # check if batch map is available, and create if not
             if not d.shape[0] in unwrap_map:
                 batch_map = {}
                 batch_id_loc = data_dim if d.shape[1] > data_dim else -1
                 batch_idx = np.unique(d[:,batch_id_loc])
+                this_batch_indices[target] = batch_idx
                 for b in batch_idx:
                     batch_map[b] = d[:,batch_id_loc] == b
+
                 unwrap_map[d.shape[0]]=batch_map
 
             batch_map = unwrap_map[d.shape[0]]
             for where in batch_map.values():
                 result_data[target].append(d[where])
+
+#    print("batch indices:", batch_indices)
+    for this_batch_indices in batch_indices:
+        all_indices = set()
+        for indices in this_batch_indices.values():
+            for idx in indices:
+                all_indices.add(idx)
+        for tgt, indices in this_batch_indices.items():
+            missing = all_indices - set(indices)
+            for m in missing:
+#                print("adding extra entry for field", tgt, "at index", m)
+                # assumes that there's at least ONE entry in this target
+                shape = list(result_data[tgt][0].shape)
+                shape[0] = 0
+                result_data[tgt].insert(int(m), np.empty(shape=shape))
+
 
     # a-2) Handle the list of list of ndarrays
     #for target in target_list_keys:
@@ -175,7 +201,7 @@ def unwrap_scn(data_blob, outputs, data_dim, avoid_keys):
                 batch_id_loc = data_dim if d.shape[1] > data_dim else -1
                 batch_idx = np.unique(d[:,batch_id_loc])
                 # ensure these are integer values
-                # print(batch_idx)
+#                print("batch values:",batch_idx)
                 assert(len(batch_idx) == len(np.unique(batch_idx.astype(np.int32))))
                 for b in batch_idx:
                     batch_map[b] = d[:,batch_id_loc] == b
