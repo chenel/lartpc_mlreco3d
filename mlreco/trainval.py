@@ -110,6 +110,8 @@ class trainval(object):
         for gpu in range(num_proc_unit):
             minibatch = next(data_iter)
             for key in minibatch:
+                # if "particles_label" in data_blob:
+                #     print("minibatched data:", minibatch["particles_label"])
                 if not key in data_blob: data_blob[key]=[]
                 data_blob[key].append(minibatch[key])
         return data_blob
@@ -210,6 +212,7 @@ class trainval(object):
             # unwrap the outcome
             unwrapper = self._trainval_config.get('unwrapper',None)
             if unwrapper is not None:
+#                print("unwrapping using", self._trainval_config.get('unwrapper',None))
                 try:
                     unwrapper = getattr(utils,unwrapper)
                 except ImportError:
@@ -217,7 +220,9 @@ class trainval(object):
                     print(msg % output_cfg['unwrapper'])
                     raise ImportError
 
+#                print("prior to unwrapping:", input_data["particles_label"])
                 input_data, res = unwrapper(input_data, res, avoid_keys=concat_keys)
+#                print("after unwrapping:", input_data["particles_label"])
             else:
                 if 'index' in input_data:
                     input_data['index'] = input_data['index'][0]
@@ -233,6 +238,7 @@ class trainval(object):
                 data_combined[key].extend(input_data[key])
 
         self._watch.stop('forward')
+#        print("data_combined:\n", data_combined["particles_label"])
         return data_combined, res_combined
 
 
