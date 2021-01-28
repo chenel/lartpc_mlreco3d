@@ -61,7 +61,7 @@ def pass_particle(gt_type, start, end, energy_deposit, vox_count):
     if gt_type == 4: return vox_count<5 or energy_deposit < 5.
 
 
-def get_ppn_info(particle_v, meta, point_type="3d", min_voxel_count=5, min_energy_deposit=0, use_particle_shape=True):
+def get_ppn_info(particle_v, meta, point_type="3d", min_voxel_count=5, min_energy_deposit=0, use_particle_shape=True, verbose=False):
     """
     Gets particle points coordinates and informations for running PPN.
 
@@ -90,18 +90,19 @@ def get_ppn_info(particle_v, meta, point_type="3d", min_voxel_count=5, min_energ
     from larcv import larcv
     gt_positions = []
     for part_index, particle in enumerate(particle_v):
+        if verbose: print("particle idx", part_index, " --> track id=", particle.track_id())
         pdg_code = abs(particle.pdg_code())
         prc = particle.creation_process()
         # Skip particle under some conditions
         if particle.energy_deposit() < min_energy_deposit or particle.num_voxels() < min_voxel_count:
-            #print('[a] skipping',part_index,'/',len(particle_v))
+            if verbose: print('[a] skipping',part_index,'/',len(particle_v)," (not enough edep)")
             continue
         if pdg_code > 1000000000:  # skipping nucleus trackid
-            #print('[b] skipping',part_index,'/',len(particle_v))
+            if verbose: print('[b] skipping',part_index,'/',len(particle_v)," (ignoring nuclear fragments)")
             continue
         if pdg_code == 11 or pdg_code == 22:  # Shower
             if not contains(meta, particle.first_step(), point_type=point_type):
-                #print('[c] skipping particle id',particle.id(),'as its start is not contained in the box...')
+                if verbose: print('[c] skipping particle id',particle.id(),'as its start is not contained in the box...')
                 #print(particle.dump())
                 #print(meta.dump())
 
@@ -127,13 +128,13 @@ def get_ppn_info(particle_v, meta, point_type="3d", min_voxel_count=5, min_energ
                 elif prc == "muMinusCaptureAtRest" or prc == "muPlusCaptureAtRest" or prc == "Decay":
                     gt_type = 4 # michel
             if gt_type == -1: # FIXME unknown point type ??
-                #print('[d] skipping',part_index,'/',len(particle_v))
+                if verbose: print('[d] skipping',part_index,'/',len(particle_v)," (unknown point type)")
                 continue
         else:
             from larcv import larcv
             gt_type = particle.shape()
             if particle.shape() in [larcv.kShapeLEScatter, larcv.kShapeUnknown]:
-                #print('[e] skipping',part_index,'/',len(particle_v))
+                if verbose: print('[e] skipping',part_index,'/',len(particle_v)," (ignoring LEScatter/Unknown shapes)")
                 continue
 
         #if pass_particle(gt_type,particle.first_step(),particle.last_step(),particle.energy_deposit(),particle.num_voxels()):
@@ -151,6 +152,7 @@ def get_ppn_info(particle_v, meta, point_type="3d", min_voxel_count=5, min_energ
         x = particle.first_step().x()
         y = particle.first_step().y()
         z = particle.first_step().z()
+        if verbose: print("particle first step (geom coords):", (x, y, z))
         if point_type == '3d':
             x = (x - meta.min_x()) / meta.size_voxel_x()
             y = (y - meta.min_y()) / meta.size_voxel_y()
@@ -160,6 +162,7 @@ def get_ppn_info(particle_v, meta, point_type="3d", min_voxel_count=5, min_energ
             x = (x - meta.min_x()) / meta.pixel_width()
             y = (y - meta.min_y()) / meta.pixel_height()
             gt_positions.append([x, y, gt_type] + record)
+        if verbose: print("particle first step (pixels):", (x, y, z))
 
         # Register end point (for tracks only)
         track_types = [0,1]
@@ -169,10 +172,12 @@ def get_ppn_info(particle_v, meta, point_type="3d", min_voxel_count=5, min_energ
             x = particle.last_step().x()
             y = particle.last_step().y()
             z = particle.last_step().z()
+            if verbose: print("particle last step (geom coords):", (x, y, z))
             if point_type == '3d':
                 x = (x - meta.min_x()) / meta.size_voxel_x()
                 y = (y - meta.min_y()) / meta.size_voxel_y()
                 z = (z - meta.min_z()) / meta.size_voxel_z()
+                if verbose: print("particle last step (pixels):", (x, y, z))
                 gt_positions.append([x, y, z, gt_type] + record)
             else:
                 x = (x - meta.min_x()) / meta.pixel_width()
