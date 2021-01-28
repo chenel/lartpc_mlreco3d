@@ -504,7 +504,7 @@ class PPNLoss(torch.nn.modules.loss._Loss):
                     total_acc += acc
                     ppn_count += 1
                 else:
-                    print("No particles !")
+                    print("No particles [PPN] !")
 
         ppn_results = {
             'ppn_acc': total_acc,

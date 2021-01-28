@@ -358,7 +358,7 @@ class SegmentationLoss(torch.nn.modules.loss._Loss):
                     total_acc += acc
                     ppn_count += 1
                 else:
-                    print("No particles !")
+                    print("No particles [UResNet+PPN] !")
 
         results = {
             'accuracy': uresnet_acc,
