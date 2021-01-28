@@ -1,6 +1,6 @@
 import plotly.graph_objs as go
 
-def scatter_points(points, dim=3, markersize=5, color='orange', colorscale=None, opacity=0.8, hovertext=None, cmin=None, cmax=None):
+def scatter_points(points, dim=3, markersize=5, symbol="circle", color='orange', colorscale=None, opacity=0.8, hovertext=None, cmin=None, cmax=None):
     """
     Produces go.Scatter3d or go.Scatter object to be plotted in plotly
     - voxels is a list of voxel coordinates (Nx2 or Nx3 matrix)
@@ -39,6 +39,8 @@ def scatter_points(points, dim=3, markersize=5, color='orange', colorscale=None,
             opacity=opacity,
             cmin=cmin,
             cmax=cmax,
+            line = { "width": 0},
+            symbol=symbol,
         ),
         hoverinfo = ['x','y'] if hovertext is None else ['x','y','text'],
         hovertext = hovertext,
