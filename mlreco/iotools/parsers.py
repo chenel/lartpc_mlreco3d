@@ -197,6 +197,26 @@ def parse_weights(data):
 
     return np_voxels, num_voxels[np_index.astype(int)]
 
+def parse_metadata(data):
+    """
+    Get the metadata object
+    Args:
+        array of larcv::EventSparseTensor3D
+    Return:
+        metadata object
+    """
+    meta = None
+    # yes, loop through all the events.  ensure the metadata is consistent
+    for event_tensor3d in data:
+        if meta is None:
+            meta = event_tensor3d.meta()
+        else:
+            assert meta == event_tensor3d.meta()
+    return meta
+
+
+def parse_particle_raw(data):
+    return [larcv.Particle(p) for p in data[0].as_vector()]
 
 def parse_particle_asis(data):
     """
@@ -208,7 +228,7 @@ def parse_particle_asis(data):
     """
     particles = data[0]
     clusters  = data[1]
-    assert particles.as_vector().size() in [clusters.as_vector().size(),clusters.as_vector().size()-1]
+#    assert particles.as_vector().size() in [clusters.as_vector().size(),clusters.as_vector().size()-1]
 
     meta = clusters.meta()
 
@@ -265,16 +285,20 @@ def parse_particle_points(data):
         and the particle data index in this order.
     """
     particles_v = data[1].as_vector()
-    part_info = get_ppn_info(particles_v, data[0].meta())
+#    print("\nprocessing particle points for event", data[1].event())
+    part_info = get_ppn_info(particles_v, data[0].meta(), verbose=data[1].event() == 3)
     # For open data - to reproduce
     # part_info = get_ppn_info(particles_v, data[0].meta(), min_voxel_count=7, min_energy_deposit=10, use_particle_shape=False)
     # part_info = get_ppn_info(particles_v, data[0].meta(), min_voxel_count=5, min_energy_deposit=10, use_particle_shape=False)
+    ret = None
     if part_info.shape[0] > 0:
         #return part_info[:, :3], part_info[:, 3][:, None]
-        return part_info[:, :3], np.column_stack([part_info[:, -6],part_info[:, -1]])
+        ret = part_info[:, :3], np.column_stack([part_info[:, -6],part_info[:, -1]])
     else:
         #return np.empty(shape=(0, 3), dtype=np.int32), np.empty(shape=(0, 1), dtype=np.float32)
-        return np.empty(shape=(0, 3), dtype=np.int32), np.empty(shape=(0, 2), dtype=np.float32)
+        ret = np.empty(shape=(0, 3), dtype=np.int32), np.empty(shape=(0, 2), dtype=np.float32)
+#    print(ret)
+    return ret
 
 
 def parse_particle_graph(data):
