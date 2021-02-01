@@ -15,7 +15,6 @@ def plotly_layout3d(ranges=None, titles=None, **kwargs):
         - titles can be specified as a length 3 array of strings for (x,y,z) axis title respectively
     OUTPUTS
         - The return is go.Layout object that can be given to go.Figure for visualization (together with traces)
-
     """
     xrange,yrange,zrange=None,None,None
     if ranges is None:
@@ -37,17 +36,20 @@ def plotly_layout3d(ranges=None, titles=None, **kwargs):
         scene = dict(
             xaxis = dict(nticks=10, range = xrange, showticklabels=True,
                          title='x' if titles is None else titles[0],
-                         backgroundcolor="lightgray", gridcolor="rgb(255, 255, 255)",
+                         backgroundcolor=None, 
+                         gridcolor="rgb(255, 255, 255)",
                          showbackground=True,
                         ),
             yaxis = dict(nticks=10, range = yrange, showticklabels=True,
                          title='y' if titles is None else titles[1],
-                         backgroundcolor="lightgray", gridcolor="rgb(255, 255, 255)",
+                         backgroundcolor=None, 
+                         gridcolor="rgb(255, 255, 255)",
                          showbackground=True
                         ),
             zaxis = dict(nticks=10, range = zrange, showticklabels=True,
                          title='z' if titles is None else titles[2],
-                         backgroundcolor="lightgray", gridcolor="rgb(255, 255, 255)",
+                         backgroundcolor=None, 
+                         gridcolor="rgb(255, 255, 255)",
                          showbackground=True,
                         ),
             aspectmode='cube',
