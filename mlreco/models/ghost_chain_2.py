@@ -279,9 +279,9 @@ class GhostChain2(torch.nn.Module):
         # Divide the particle GNN output out into different arrays (one per batch)
         _, counts = torch.unique(input[0][:,3], return_counts=True)
         vids = np.concatenate([np.arange(n.item()) for n in counts])
-        cids = np.concatenate([np.arange(n) for n in np.unique(frag_batch_ids, return_counts=True)[1]])
+        cids = np.concatenate([np.arange(n) for n in np.unique(frag_batch_ids, return_counts=True)[1]]) if len(frag_batch_ids > 0) else np.array([])
         bcids = [np.where(frag_batch_ids == b)[0] for b in range(len(counts))]
-        beids = [np.where(frag_batch_ids[edge_index[0]] == b)[0] for b in range(len(counts))]
+        beids = [np.where(frag_batch_ids[edge_index[0]] == b)[0] for b in range(len(counts))] if edge_index.size > 0 else []
 
         for net in node_predictors:
             if isinstance(net, str):
@@ -326,7 +326,7 @@ class GhostChain2(torch.nn.Module):
         if 'group_pred' in labels:
             group_ids = []
             for b in range(len(counts)):
-                if not len(frags[b]):
+                if not len(frags[b]) or b >= len(edge_index):
                     group_ids.append(np.array([], dtype = np.int64))
                 else:
                     group_ids.append(node_assignment_score(edge_index[b], edge_pred[b].detach().cpu().numpy(), len(frags[b])))
@@ -415,8 +415,19 @@ class GhostChain2(torch.nn.Module):
             # Initialize a complete graph for edge prediction, get shower fragment and edge features
             em_mask = np.where(frag_seg == 0)[0]
             edge_index = complete_graph(frag_batch_ids[em_mask])
-            x = self.node_encoder(input[0], fragments[em_mask])
-            e = self.edge_encoder(input[0], fragments[em_mask], edge_index)
+#            print("fragments[em_mask]:", fragments[em_mask])
+#            print("frag_batch_ids[em_mask]:", frag_batch_ids[em_mask])
+
+            # can't batch-normalize with only a single element...
+            if len(em_mask) == 1:
+                em_mask = np.array([], dtype=int)
+
+            if len(fragments[em_mask]) > 1:
+                x = self.node_encoder(input[0], fragments[em_mask])
+                e = self.edge_encoder(input[0], fragments[em_mask], edge_index)
+            else:
+                x = torch.empty((0,10), device=device)
+                e = torch.empty((0,19), device=device)
 
             if self.use_ppn_in_gnn:
                 # Extract shower starts from PPN predictions (most likely prediction)

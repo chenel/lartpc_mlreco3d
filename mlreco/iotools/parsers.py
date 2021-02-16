@@ -536,8 +536,8 @@ def parse_cluster3d_full(data):
                                fill_value=particles_v[i].shape(), dtype=np.float32)
             clusters_voxels.append(np.stack([x, y, z], axis=1))
             clusters_features.append(np.column_stack([value,cluster_id,group_id,inter_id,nu_id,pdg,sem_type]))
-    np_voxels   = np.concatenate(clusters_voxels, axis=0)
-    np_features = np.concatenate(clusters_features, axis=0)
+    np_voxels   = np.concatenate(clusters_voxels, axis=0) if len(clusters_voxels) > 0 else np.empty(shape=(0,3))
+    np_features = np.concatenate(clusters_features, axis=0) if len(clusters_features) > 0 else np.empty(shape=(0, 7))
 
     return np_voxels, np_features
 

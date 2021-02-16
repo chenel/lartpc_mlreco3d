@@ -140,7 +140,7 @@ def cluster_edge_features(data, clusts, edge_index):
     Returns:
         np.ndarray: (E,19) Tensor of edge features (point1, point2, displacement, distance, orientation)
     """
-    return np.vstack([cluster_edge_feature(data, clusts[e[0]], clusts[e[1]]) for e in edge_index.T])
+    return np.vstack([cluster_edge_feature(data, clusts[e[0]], clusts[e[1]]) for e in edge_index.T]) if edge_index.size > 0 else np.empty(shape=(0, 19))
 
 
 def vtx_features(data, max_dist=5.0, delta=0.0):

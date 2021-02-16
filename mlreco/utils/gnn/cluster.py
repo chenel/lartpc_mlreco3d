@@ -305,7 +305,7 @@ def get_cluster_features(data, clusts, whether_adjust_direction=False):
         # Append (center, B.flatten(), v0, size)
         feats.append(np.concatenate((center, B.flatten(), v0, [len(c)])))
 
-    return np.vstack(feats)
+    return np.vstack(feats) if len(feats) > 0 else np.empty(shape=(0, 16))
 
 
 def get_cluster_features_extended(data_values, data_sem_types, clusts):

@@ -119,7 +119,7 @@ class ClustGeoNodeEncoder(torch.nn.Module):
                 extra_feats = torch.tensor([values[c].mean(), values[c].std(), sem_types[c].mode()[0]], dtype=dtype, device=device)
                 feats.append(torch.cat((center, B.flatten(), v0, size, extra_feats)))
 
-        return torch.stack(feats, dim=0)
+        return torch.stack(feats, dim=0) if len(feats) > 0 else torch.empty((0,10), device=device)
 
 
 class ClustGeoEdgeEncoder(torch.nn.Module):
@@ -179,7 +179,7 @@ class ClustGeoEdgeEncoder(torch.nn.Module):
 
                 feats.append(torch.cat([v1, v2, disp, lend.reshape(1), B]))
 
-            feats = torch.stack(feats, dim=0)
+            feats = torch.stack(feats, dim=0) if len(feats) > 0 else torch.empty((0,19), device=voxels.device)
 
         # If the graph is undirected, infer reciprocal features
         if undirected:

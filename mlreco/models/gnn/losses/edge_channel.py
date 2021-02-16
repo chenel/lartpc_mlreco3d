@@ -69,7 +69,7 @@ class EdgeChannelLoss(torch.nn.Module):
         for i in range(len(clusters)):
 
             # If this batch did not have any node, proceed
-            if 'edge_pred' not in out:
+            if 'edge_pred' not in out or len(out['edge_pred'][0]) < 1:
                 continue
 
             # Get the list of batch ids, loop over individual batches

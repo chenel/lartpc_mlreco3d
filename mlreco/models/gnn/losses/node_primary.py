@@ -83,13 +83,14 @@ class NodePrimaryLoss(torch.nn.Module):
 
                 # If requested, relabel the group ids in the batch according to the group predictions
                 if self.use_group_pred:
-                    if self.group_pred_alg == 'threshold':
-                        pred_group_ids = node_assignment(out['edge_index'][i][j], np.argmax(out['edge_pred'][i][j].detach().cpu().numpy(), axis=1), len(clusts))
-                    elif self.group_pred_alg == 'score':
-                        pred_group_ids = node_assignment_score(out['edge_index'][i][j], out['edge_pred'][i][j].detach().cpu().numpy(), len(clusts))
-                    else:
-                        raise ValueError('Group prediction algorithm not recognized: '+self.group_pred_alg)
-                    group_ids = relabel_groups(clust_ids, group_ids, pred_group_ids)
+                    if len(out['edge_index']) < i and len(out['edge_index'][i]) < j:
+                        if self.group_pred_alg == 'threshold':
+                            pred_group_ids = node_assignment(out['edge_index'][i][j], np.argmax(out['edge_pred'][i][j].detach().cpu().numpy(), axis=1), len(clusts))
+                        elif self.group_pred_alg == 'score':
+                            pred_group_ids = node_assignment_score(out['edge_index'][i][j], out['edge_pred'][i][j].detach().cpu().numpy(), len(clusts))
+                        else:
+                            raise ValueError('Group prediction algorithm not recognized: '+self.group_pred_alg)
+                        group_ids = relabel_groups(clust_ids, group_ids, pred_group_ids)
 
                 # If requested, remove groups that do not contain exactly one primary from the loss
                 if self.high_purity:
