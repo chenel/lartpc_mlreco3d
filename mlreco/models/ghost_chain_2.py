@@ -138,8 +138,18 @@ class GhostChain2(torch.nn.Module):
             self.input_features = cfg['uresnet_ppn']['uresnet_lonely'].get('features', 1)
             self._num_strides = cfg['uresnet_ppn']['uresnet_lonely'].get('num_strides', 5)
 
+            self._freeze_uresnet = cfg['uresnet_ppn']['uresnet_lonely'].get('freeze', False)
+            if self._freeze_uresnet:
+                for param in self.uresnet_lonely.parameters():
+                    param.requires_grad = False
+
         if self.enable_ppn:
             self.ppn            = PPN(cfg['uresnet_ppn'])
+
+            self._freeze_ppn = cfg['uresnet_ppn']['ppn'].get('freeze', False)
+            if self._freeze_ppn:
+                for param in self.ppn.parameters():
+                    param.requires_grad = False
 
         # CNN clustering
         self.min_frag_size = -1
