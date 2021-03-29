@@ -115,20 +115,25 @@ def unwrap_scn(data_blob, outputs, data_dim, avoid_keys):
             for where in batch_map.values():
                 result_data[target].append(d[where])
 
-#    print("batch indices:", batch_indices)
-    for this_batch_indices in batch_indices:
-        all_indices = set()
-        for indices in this_batch_indices.values():
-            for idx in indices:
-                all_indices.add(idx)
-        for tgt, indices in this_batch_indices.items():
-            missing = all_indices - set(indices)
-            for m in missing:
-#                print("adding extra entry for field", tgt, "at index", m)
-                # assumes that there's at least ONE entry in this target
-                shape = list(result_data[tgt][0].shape)
-                shape[0] = 0
-                result_data[tgt].insert(int(m), np.empty(shape=shape))
+
+    # # ensure there aren't any batch indices missing.
+    # # needed only when using masking (e.g. for hits w/o truth info)?
+    # print("batch indices:", batch_indices)
+    # # ensure there are no missing batch
+    # for this_batch_indices in batch_indices:
+    #     all_indices = set()
+    #     for indices in this_batch_indices.values():
+    #         for idx in indices:
+    #             all_indices.add(idx)
+    #     for tgt, indices in this_batch_indices.items():
+    #         all_indices = set(np.arange(min(all_indices), max(all_indices)+1))
+    #         missing = all_indices - set(indices)
+    #         for m in missing:
+    #             print("adding extra entry for field", tgt, "at index", m)
+    #             # assumes that there's at least ONE entry in this target
+    #             shape = list(result_data[tgt][0].shape)
+    #             shape[0] = 0
+    #             result_data[tgt].insert(int(m), np.empty(shape=shape))
 
 
     # a-2) Handle the list of list of ndarrays
@@ -249,7 +254,7 @@ def unwrap_scn(data_blob, outputs, data_dim, avoid_keys):
             dlist = outputs[target][data_index]
             for d in dlist:
                 if not d.shape[0] in element_map:
-                    batch_id_loc = data_dim if d.shape[1] > data_dim else -1
+                    batch_id_loc = data_dim if len(d.shape) > 1 and d.shape[1] > data_dim else -1
                     batch_idx = np.unique(d[:,batch_id_loc])
                     batch_ctrs.append(int(np.max(batch_idx)+1))
                     assert(len(batch_idx) == len(np.unique(batch_idx.astype(np.int32))))

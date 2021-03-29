@@ -300,8 +300,7 @@ def parse_particle_points(data):
         and the particle data index in this order.
     """
     particles_v = data[1].as_vector()
-#    print("\nprocessing particle points for event", data[1].event())
-    part_info = get_ppn_info(particles_v, data[0].meta(), verbose=data[1].event() == 3)
+    part_info = get_ppn_info(particles_v, data[0].meta()) #, verbose=data[1].event() == 3)
     # For open data - to reproduce
     # part_info = get_ppn_info(particles_v, data[0].meta(), min_voxel_count=7, min_energy_deposit=10, use_particle_shape=False)
     # part_info = get_ppn_info(particles_v, data[0].meta(), min_voxel_count=5, min_energy_deposit=10, use_particle_shape=False)

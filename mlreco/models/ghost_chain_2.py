@@ -363,7 +363,7 @@ class GhostChain2(torch.nn.Module):
         # - frag_seg (list of integers, semantic label for each fragment)
         # ---
 
-        semantic_labels = torch.argmax(result['segmentation'][0], dim=1).flatten().double()
+        semantic_labels = torch.argmax(result['segmentation'][0], dim=1).flatten().double() if len(result['segmentation'][0]) > 0 else torch.empty(0, device=device)
         semantic_data = torch.cat((input[0][:,:4], semantic_labels.reshape(-1,1)), dim=1)
         fragments, frag_batch_ids, frag_seg = [], [], []
 
@@ -387,6 +387,7 @@ class GhostChain2(torch.nn.Module):
             frag_batch_ids_dbscan = get_cluster_batch(input[0], fragments_dbscan)
             frag_seg_dbscan = np.empty(len(fragments_dbscan), dtype=np.int32)
             for i, f in enumerate(fragments_dbscan):
+                f = np.asarray(f, dtype=int)
                 vals, cnts = semantic_labels[f].unique(return_counts=True)
                 assert len(vals) == 1
                 frag_seg_dbscan[i] = vals[torch.argmax(cnts)].item()
@@ -413,7 +414,7 @@ class GhostChain2(torch.nn.Module):
 
             result.update({
                 'clust_fragments': [frags],
-                #'clust_frag_batch_ids': [frag_batch_ids],
+                'clust_frag_batch_ids': [frag_batch_ids],
                 'clust_frag_seg': [frags_seg]
             })
 
@@ -625,6 +626,12 @@ class GhostChain2(torch.nn.Module):
         Assumes single GPU/CPU.
         input: can contain just the input energy depositions, or include true clusters
         """
+
+        if len(input[0]) == 0:
+            assert self.enable_uresnet
+            return {""}
+
+
         label_seg, label_clustering = None, None
         if len(input) == 3:
             input, label_seg, label_clustering = input
