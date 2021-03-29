@@ -58,6 +58,7 @@ def get_cluster_batch(data, clusts, batch_index=3):
     """
     labels = []
     for c in clusts:
+        c = np.asarray(c, dtype=int)
         assert len(data[c,batch_index].unique()) == 1
         labels.append(int(data[c[0],batch_index].item()))
 
