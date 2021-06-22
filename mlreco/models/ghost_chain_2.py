@@ -512,9 +512,11 @@ class GhostChain2(torch.nn.Module):
         if self.enable_gnn_int:
             now = time.time()
             # Initialize a complete graph for edge prediction, get particle and edge features
-            edge_index = complete_graph(part_batch_ids)
-            x = self.node_encoder(input[0], particles, )
-            e = self.edge_encoder(input[0], particles, edge_index)
+            part_mask = part_seg != 4   # exclude LEScatter, for the moment
+            print("GNN int:", len(particles), "total;", part_mask, "if exclude LEScatter")
+            edge_index = complete_graph(part_batch_ids[part_mask])
+            x = self.node_encoder(input[0], particles[part_mask], )
+            e = self.edge_encoder(input[0], particles[part_mask], edge_index)
 
             # Extract interesting points for particles, add semantic class, mean value and rms value
             # - For showers, take the most likely PPN voxel of the primary fragment
