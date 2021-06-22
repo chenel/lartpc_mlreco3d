@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import time
+
 import torch
 import numpy as np
 from collections import defaultdict
@@ -382,6 +384,7 @@ class GhostChain2(torch.nn.Module):
             frag_seg.extend(frag_seg_cnn)
 
         if self.enable_dbscan:
+            now = time.time()
             # Get the fragment predictions from the DBSCAN fragmenter
             fragments_dbscan = self.dbscan_frag(semantic_data, result)
             frag_batch_ids_dbscan = get_cluster_batch(input[0], fragments_dbscan)
@@ -417,12 +420,14 @@ class GhostChain2(torch.nn.Module):
                 'clust_frag_batch_ids': [frag_batch_ids],
                 'clust_frag_seg': [frags_seg]
             })
+            print("Finished DBSCAN (time =", time.time() - now, "secs)")
 
         # ---
         # 2. GNN clustering: shower & track
         # ---
 
         if self.enable_gnn_shower:
+            now = time.time()
             # Initialize a complete graph for edge prediction, get shower fragment and edge features
             em_mask = np.where(frag_seg == 0)[0]
             edge_index = complete_graph(frag_batch_ids[em_mask])
@@ -456,7 +461,10 @@ class GhostChain2(torch.nn.Module):
             self.run_gnn(self.grappa_shower, input, result, frag_batch_ids[em_mask], fragments[em_mask], edge_index, x, e,
                         {'frags': 'fragments', 'node_pred': 'frag_node_pred', 'edge_pred': 'frag_edge_pred', 'edge_index': 'frag_edge_index', 'group_pred': 'frag_group_pred'})
 
+            print("Finished grappa_shower (time =", time.time() - now, "secs)")
+
         if self.enable_gnn_tracks:
+            now = time.time()
             # Initialize a complete graph for edge prediction, get track fragment and edge features
             em_mask = np.where(frag_seg == 1)[0]
             edge_index = complete_graph(frag_batch_ids[em_mask])
@@ -465,6 +473,7 @@ class GhostChain2(torch.nn.Module):
 
             self.run_gnn(self.grappa_track, input, result, frag_batch_ids[em_mask], fragments[em_mask], edge_index, x, e,
                         {'frags': 'track_fragments', 'node_pred': 'track_node_pred', 'edge_pred': 'track_edge_pred', 'edge_index': 'track_edge_index', 'group_pred': 'track_group_pred'})
+            print("Finished grappa_track (time =", time.time() - now, "secs)")
 
         # Merge fragments into particle instances, retain primary fragment id of showers
         if self.enable_gnn_int or self.enable_kinematics:
@@ -500,6 +509,7 @@ class GhostChain2(torch.nn.Module):
         # ---
 
         if self.enable_gnn_int:
+            now = time.time()
             # Initialize a complete graph for edge prediction, get particle and edge features
             edge_index = complete_graph(part_batch_ids)
             x = self.node_encoder(input[0], particles, )
@@ -540,6 +550,8 @@ class GhostChain2(torch.nn.Module):
             self.run_gnn(self.grappa_inter, input, result, part_batch_ids, particles, edge_index, x, e,
                         {'frags': 'particles', 'edge_pred': 'inter_edge_pred', 'edge_index': 'inter_edge_index', 'group_pred': 'inter_group_pred'},
                         node_predictors=[])
+
+            print("Finished grappa_int (time =", time.time() - now, "secs)")
 
         # ---
         # 4. GNN for particle flow & kinematics
@@ -627,6 +639,8 @@ class GhostChain2(torch.nn.Module):
         input: can contain just the input energy depositions, or include true clusters
         """
 
+        print("starting forward()")
+
         if len(input[0]) == 0:
             assert self.enable_uresnet
             return {""}
@@ -641,9 +655,13 @@ class GhostChain2(torch.nn.Module):
 
         # Pass the input data through UResNet+PPN (semantic segmentation + point prediction)
         result = {}
+
         if self.enable_uresnet:
+            now = time.time()
             result = self.uresnet_lonely([input[0][:,:4+self.input_features]])
+            print("Finished UResNet (time =", time.time() - now, "secs)")
         if self.enable_ppn:
+            now = time.time()
             ppn_input = {}
             ppn_input.update(result)
             ppn_input['ppn_feature_enc'] = ppn_input['ppn_feature_enc'][0]
@@ -652,6 +670,7 @@ class GhostChain2(torch.nn.Module):
                 ppn_input['ghost'] = ppn_input['ghost'][0]
             ppn_output = self.ppn(ppn_input)
             result.update(ppn_output)
+            print("Finished PPN (time =", time.time() - now, "secs)")
 
         # The rest of the chain only needs 1 input feature
         if self.input_features > 1:

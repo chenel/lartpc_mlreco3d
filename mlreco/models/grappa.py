@@ -199,6 +199,8 @@ class GNN(torch.nn.Module):
         ecids = np.concatenate([np.arange(n) for n in np.unique(batch_ids, return_counts=True)[1]])
         result['edge_index'] = [[ecids[edge_index[:,b]].T for b in ebids]]
 
+        print("grappa '%s' has edge_index:" % self.name, edge_index)
+
         # Obtain node and edge features
         x = self.node_encoder(cluster_data, clusts)
         e = self.edge_encoder(cluster_data, clusts, edge_index)

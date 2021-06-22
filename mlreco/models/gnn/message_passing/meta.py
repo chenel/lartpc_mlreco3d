@@ -64,7 +64,7 @@ class MetaLayerModel(nn.Module):
             x = self.bn_node[i](x)
             # add u and batch arguments for not having error in some old version
             x, e, _ = self.edge_updates[i](x, edge_indices, e, u=None, batch=xbatch)
-        # print(edge_indices.shape)
+        print("for GNN '%s', edge_indices.shape = " % self.name, edge_indices.shape)
         x_pred = self.node_predictor(x)
         e_pred = self.edge_predictor(e)
 

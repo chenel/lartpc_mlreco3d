@@ -27,7 +27,7 @@ class DBSCANFragmenter(torch.nn.Module):
         self.min_samples = self.cfg.get('min_samples', 1)
         self.min_size = self.cfg.get('min_size', [10,3,3,3])
         self.num_classes = self.cfg.get('num_classes', 4)
-        
+
         # cluster_classes determines which semantic classes will undergo DBSCAN clustering
         # Priority to set this parameter (from top to bottom):
         # - configuration of DBScanFragmenter (so you can exclude LE for example)
@@ -59,12 +59,16 @@ class DBSCANFragmenter(torch.nn.Module):
         numpy_output = {'segmentation':[output['segmentation'][0].detach().cpu().numpy()],
                         'points':      [output['points'][0].detach().cpu().numpy()],
                         'mask_ppn2':   [output['mask_ppn2'][0].detach().cpu().numpy()]}
-        points =  uresnet_ppn_type_point_selector(data, numpy_output,
-                                                  score_threshold = self.ppn_score_threshold,
-                                                  type_threshold = self.ppn_type_threshold,
-                                                  type_score_threshold = self.ppn_type_score_threshold)
+        params = {
+            "score_threshold": self.ppn_score_threshold,
+            "type_threshold": self.ppn_type_threshold,
+            "type_score_threshold": self.ppn_type_score_threshold
+        }
+#        print("params passed to uresnet_ppn_type_point_selector():\n", params)
+        points =  uresnet_ppn_type_point_selector(data, numpy_output, **params)
         point_labels = points[:,-1]
         track_points = points[(point_labels == self.track_label) | (point_labels == self.michel_label),:self.dim+1]
+#        print("Track-type points:\n", track_points)
 
         # Break down the input data to its components
         bids = np.unique(data[:,self.dim])

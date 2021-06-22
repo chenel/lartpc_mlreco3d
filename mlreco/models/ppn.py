@@ -305,6 +305,7 @@ class PPNLoss(torch.nn.modules.loss._Loss):
 
                 # PPN stuff
                 event_label = event_particles[event_particles[:, -3] == b][:, :-3]  # (N_gt, 3)
+                print("event_label:", event_label)
                 event_types_label = event_particles[event_particles[:, -3] == b][:, -2]
                 if event_label.size(0) > 0:
                     # Mask: only consider pixels that were selected
@@ -329,6 +330,8 @@ class PPNLoss(torch.nn.modules.loss._Loss):
                     event_scores = event_scores[event_mask]
                     event_types = event_types[event_mask]
                     event_data = event_data[event_mask]
+
+                    print("event_scores:", event_scores)
 
                     # Mask for PPN2 (intermediate)
                     # We mask by ghost predictions + ppn1 predictions
@@ -408,14 +411,21 @@ class PPNLoss(torch.nn.modules.loss._Loss):
                     # Loss ppn1 & ppn2 (predict positives)
                     # print(event_label.size())
                     event_label_ppn1 = torch.floor(event_label/float(2**self.ppn1_stride))
+                    print("event_label_ppn1:", event_label_ppn1)
                     event_label_ppn2 = torch.floor(event_label/float(2**self.ppn2_stride))
                     d_true_ppn1 = self.distances(event_label_ppn1, event_ppn1_data)
+                    print("self._true_distance_ppn1:", self._true_distance_ppn1)
+                    print("d_true_ppn1:", d_true_ppn1)
                     d_true_ppn2 = self.distances(event_label_ppn2, event_ppn2_data)
                     positives_ppn1 = (d_true_ppn1 < self._true_distance_ppn1).any(dim=0)
+                    print("positives_ppn1:", positives_ppn1)
+                    print('d_true_ppn1[positives_ppn1]:', d_true_ppn1[:, positives_ppn1])
                     positives_ppn2 = (d_true_ppn2 < self._true_distance_ppn2).any(dim=0)
 
                     num_positives_ppn1 = positives_ppn1.long().sum()
                     num_negatives_ppn1 = positives_ppn1.nelement() - num_positives_ppn1
+                    print("num_positives_ppn1:", num_positives_ppn1)
+                    print("num_negatives_ppn1:", num_negatives_ppn1)
                     w = num_positives_ppn1.float() / (num_positives_ppn1 + num_negatives_ppn1).float()
                     # weight_ppn1 = torch.stack([w, 1-w]).double()
                     # print("ppn1", weight_ppn1)
@@ -491,6 +501,7 @@ class PPNLoss(torch.nn.modules.loss._Loss):
                     # positives = (d_true[:, event_mask] < 5).any(dim=0)
                     # distances_positives = d[:, event_mask][:, positives]
                     distances_positives = d[:, positives]
+                    print("distances_positives:", distances_positives)
                     if distances_positives.shape[1] > 0:
                         d2, _ = torch.min(distances_positives, dim=0)
                         loss_seg += d2.mean()
@@ -512,7 +523,13 @@ class PPNLoss(torch.nn.modules.loss._Loss):
                     total_loss_ppn2 += loss_seg_ppn2
                     total_acc_ppn1 += acc_ppn1
                     total_acc_ppn2 += acc_ppn2
+                    print("self._weight_seg:", self._weight_seg)
+                    print("loss_seg:", loss_seg)
+                    print("self._weight_ppn1:", self._weight_ppn1)
+                    print("loss_seg_ppn1:", loss_seg_ppn1)
+                    print("loss_seg_ppn2:", loss_seg_ppn2)
                     total_loss += (self._weight_seg*loss_seg + self._weight_ppn1*loss_seg_ppn1 + loss_seg_ppn2).float()
+                    print("total_loss:", total_loss)
                     total_acc += acc
                     ppn_count += 1
                 else:
