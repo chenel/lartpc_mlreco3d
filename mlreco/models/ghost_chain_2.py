@@ -466,12 +466,13 @@ class GhostChain2(torch.nn.Module):
         if self.enable_gnn_tracks:
             now = time.time()
             # Initialize a complete graph for edge prediction, get track fragment and edge features
-            em_mask = np.where(frag_seg == 1)[0]
-            edge_index = complete_graph(frag_batch_ids[em_mask])
-            x = self.node_encoder(input[0], fragments[em_mask])
-            e = self.edge_encoder(input[0], fragments[em_mask], edge_index)
+            track_mask = np.where(frag_seg == 1)[0]
+            print("there are", np.count_nonzero(track_mask), "track fragments in this batch")
+            edge_index = complete_graph(frag_batch_ids[track_mask])
+            x = self.node_encoder(input[0], fragments[track_mask])
+            e = self.edge_encoder(input[0], fragments[track_mask], edge_index)
 
-            self.run_gnn(self.grappa_track, input, result, frag_batch_ids[em_mask], fragments[em_mask], edge_index, x, e,
+            self.run_gnn(self.grappa_track, input, result, frag_batch_ids[track_mask], fragments[track_mask], edge_index, x, e,
                         {'frags': 'track_fragments', 'node_pred': 'track_node_pred', 'edge_pred': 'track_edge_pred', 'edge_index': 'track_edge_index', 'group_pred': 'track_group_pred'})
             print("Finished grappa_track (time =", time.time() - now, "secs)")
 
