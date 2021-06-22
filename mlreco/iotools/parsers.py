@@ -229,6 +229,16 @@ def parse_metadata(data):
             assert meta == event_tensor3d.meta()
     return meta
 
+def parse_eventbase(data):
+    """
+    Get event base info
+    Args:
+        array of larcv::EventSparseTensor3D
+    Return:
+        numpy array of (run, subrun, event)
+    """
+    d = data[0]
+    return [np.array([d.run(), d.subrun(), d.event()], dtype=np.uint)]
 
 def parse_particle_raw(data):
     return [larcv.Particle(p) for p in data[0].as_vector()]
