@@ -67,6 +67,8 @@ class GNN(torch.nn.Module):
     def __init__(self, cfg, name='grappa'):
         super(GNN, self).__init__()
 
+        self.name = name
+
         # Get the chain input parameters
         base_config = cfg[name].get('base', {})
 

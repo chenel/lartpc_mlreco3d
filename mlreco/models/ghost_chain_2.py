@@ -181,12 +181,12 @@ class GhostChain2(torch.nn.Module):
             self.edge_encoder = edge_encoder_construct(cfg['grappa_shower'])
 
         if self.enable_gnn_shower:
-            self.grappa_shower  = GNN(cfg['grappa_shower']['gnn_model'])
+            self.grappa_shower  = GNN(cfg['grappa_shower']['gnn_model'], "grappa_shower")
             self.min_frag_size = max(self.min_frag_size, cfg['grappa_shower']['base'].get('node_min_size', -1))
             self.start_dir_max_dist = cfg['grappa_shower']['base'].get('start_dir_max_dist', 5)
 
         if self.enable_gnn_tracks:
-            self.grappa_track  = GNN(cfg['grappa_track']['gnn_model'])
+            self.grappa_track  = GNN(cfg['grappa_track']['gnn_model'], "grappa_track")
             self.min_frag_size = max(self.min_frag_size, cfg['grappa_track']['base'].get('node_min_size', -1))
 
         if self.enable_gnn_int:

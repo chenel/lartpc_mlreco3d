@@ -11,8 +11,9 @@ class MetaLayerModel(nn.Module):
     '''
     MetaLayer GNN Module for extracting node/edge/global features
     '''
-    def __init__(self, cfg):
+    def __init__(self, cfg, name=""):
         super(MetaLayerModel, self).__init__()
+        self.name = name
         self.model_config = cfg
         self.node_input     = self.model_config.get('node_feats', 16)
         self.edge_input     = self.model_config.get('edge_feats', 19)
