@@ -21,9 +21,13 @@ class Chain(torch.nn.Module):
         self.ppn            = PPN(model_config)
         self.uresnet_lonely = UResNet(model_config)
         self._freeze_uresnet = model_config['uresnet_lonely'].get('freeze', False)
+        self._freeze_ppn = model_config['ppn'].get('freeze', True)
 
         if self._freeze_uresnet:
             for param in self.uresnet_lonely.parameters():
+                param.requires_grad = False
+        if self._freeze_ppn:
+            for param in self.ppn.parameters():
                 param.requires_grad = False
 
     def forward(self, input):
